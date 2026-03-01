@@ -31,3 +31,58 @@ def create_doc_and_layers():
     doc.layers.add(name='Axises',  color=6, linetype='CENTER')
     doc.layers.add(name='Measure', color=170, lineweight=25)
     return doc, msp
+
+def draw_shank(msp, D, L, CHAMFER_TIP, L_SHANK):
+    # Ось болта
+    msp.add_line((-AXIS_OVERHANG, 0),
+                 (L + AXIS_OVERHANG, 0),
+                 dxfattribs={'layer': 'Axises'})
+
+    # Верхняя боковая поверхность стержня
+    shank_top_start = (L_SHANK, D / 2)
+    shank_chamfer_x = L - CHAMFER_TIP
+    shank_top_end   = (shank_chamfer_x, D / 2)
+    line_top = msp.add_line(shank_top_start, shank_top_end,
+                            dxfattribs={'layer': 'Main'})
+    # Фаска 45 на торце
+    chamfer_start = shank_top_end
+    chamfer_end   = (L, D / 2 - CHAMFER_TIP)
+    line_ch = msp.add_line(chamfer_start, chamfer_end,
+                           dxfattribs={'layer': 'Main'})
+    # Торцевая вертикаль
+    line_tip = msp.add_line(chamfer_end, (L, 0),
+                            dxfattribs={'layer': 'Main'})
+    # Симметрия — отражение вниз
+    for ln in [line_top, line_ch, line_tip]:
+        sym = ln.copy()
+        msp.add_entity(sym)
+        sym.scale(1, -1, 1)
+    return chamfer_start, chamfer_end
+
+def draw_head(msp, D, L, L_SHANK, R_inscribed, R_circ,
+              HEAD_CHAMFER_DEG):
+    head_chamfer_dy = R_circ - R_inscribed
+    head_chamfer_dx = tan(radians(HEAD_CHAMFER_DEG)) * head_chamfer_dy
+    head_chamfer_start = (head_chamfer_dx, R_inscribed)
+    head_chamfer_end   = (0, R_circ)
+    
+    # Верхняя грань головки
+    line_top = msp.add_line((L_SHANK, R_inscribed),
+                            head_chamfer_start,
+                            dxfattribs={'layer': 'Main'})
+    # Фаска на торце головки
+    line_ch = msp.add_line(head_chamfer_start, head_chamfer_end,
+                           dxfattribs={'layer': 'Main'})
+    # Торец головки (вертикаль)
+    line_left = msp.add_line(head_chamfer_end, (0, 0),
+                             dxfattribs={'layer': 'Main'})
+    # Ступенька головка→стержень
+    line_step = msp.add_line((L_SHANK, R_inscribed),
+                             (L_SHANK, D / 2),
+                             dxfattribs={'layer': 'Main'})
+    # Симметрия
+    for ln in [line_top, line_ch, line_left, line_step]:
+        sym = ln.copy()
+        msp.add_entity(sym)
+        sym.scale(1, -1, 1)
+    return head_chamfer_start, head_chamfer_end
