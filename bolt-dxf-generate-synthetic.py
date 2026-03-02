@@ -65,7 +65,7 @@ def draw_head(msp, D, L, L_SHANK, R_inscribed, R_circ,
     head_chamfer_dx = tan(radians(HEAD_CHAMFER_DEG)) * head_chamfer_dy
     head_chamfer_start = (head_chamfer_dx, R_inscribed)
     head_chamfer_end   = (0, R_circ)
-    
+
     # Верхняя грань головки
     line_top = msp.add_line((L_SHANK, R_inscribed),
                             head_chamfer_start,
@@ -86,3 +86,56 @@ def draw_head(msp, D, L, L_SHANK, R_inscribed, R_circ,
         msp.add_entity(sym)
         sym.scale(1, -1, 1)
     return head_chamfer_start, head_chamfer_end
+
+def draw_thread(msp, D, L, CHAMFER_TIP, L_THREAD):
+    D2_radius    = D / 2 * 0.84
+    x_thread_end = L - L_THREAD
+    # Линия внутреннего диаметра (тонкая, слой Thread)
+    line_inner = msp.add_line(
+        (x_thread_end, D2_radius),
+        (L - CHAMFER_TIP, D2_radius),
+        dxfattribs={'layer': 'Thread'})
+    
+    # Граница резьбы — вертикаль (сплошная)
+    line_runout = msp.add_line(
+        (x_thread_end, D2_radius),
+        (x_thread_end, D / 2),
+        dxfattribs={'layer': 'Thread'})
+    
+    # Граница резьбы — штриховая (до оси)
+    line_dashed = msp.add_line(
+        (x_thread_end, D2_radius),
+        (x_thread_end, 0),
+        dxfattribs={'layer': 'Thread', 'linetype': 'DASHED'})
+    
+    # Симметрия
+    for ln in [line_inner, line_runout, line_dashed]:
+        sym = ln.copy()
+        msp.add_entity(sym)
+        sym.scale(1, -1, 1)
+    return x_thread_end
+
+def draw_side_view(msp, L, S_key, R_inscribed, R_circ):
+    x_offset_side = L + VIEW_GAP + R_circ
+    verts = hex_vertices(x_offset_side, 0, R_circ)
+    # 6 сторон шестигранника
+    for i in range(6):
+        msp.add_line(verts[i], verts[(i+1) % 6],
+                     dxfattribs={'layer': 'Main'})
+    # 3 диагонали (вершина→противоположная)
+    for i in range(3):
+        msp.add_line(verts[i], verts[i+3],
+                     dxfattribs={'layer': 'Main'})
+    # Вписанная и описанная окружности
+    msp.add_circle((x_offset_side, 0), R_inscribed,
+                   dxfattribs={'layer': 'Main'})
+    msp.add_circle((x_offset_side, 0), R_circ,
+                   dxfattribs={'layer': 'Main'})
+    # Осевые линии вида сбоку
+    msp.add_line((x_offset_side - R_circ - AXIS_OVERHANG, 0),
+                 (x_offset_side + R_circ + AXIS_OVERHANG, 0),
+                 dxfattribs={'layer': 'Axises'})
+    msp.add_line((x_offset_side, -R_circ - AXIS_OVERHANG),
+                 (x_offset_side,  R_circ + AXIS_OVERHANG),
+                 dxfattribs={'layer': 'Axises'})
+    return x_offset_side
