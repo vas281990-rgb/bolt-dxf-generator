@@ -178,7 +178,7 @@ def draw_dimensions(msp, D, L, L_SHANK, L_THREAD, R_circ,
         dimstyle='STANDARD', angle=90, override=ov,
         dxfattribs={'layer':'Thread'})
     d4.render()
-    
+
     # Размер под ключ (вид сбоку)
     d5 = msp.add_linear_dim(
         base=(x_offset_side, -(R_inscribed+7.5)),
@@ -187,3 +187,38 @@ def draw_dimensions(msp, D, L, L_SHANK, L_THREAD, R_circ,
         dimstyle='STANDARD', override=ov,
         dxfattribs={'layer':'Measure'})
     d5.render()
+
+BOLT_PARAMS = [
+    (20, 30, 12.5),  # M20
+    (24, 36, 15.0),  # M24
+    (27, 41, 17.0),  # M27
+    (30, 46, 18.7),  # M30
+    (36, 55, 22.5),  # M36
+]
+L_START, L_END, L_STEP = 80, 160, 9.73
+os.makedirs('./output_bolts', exist_ok=True)
+
+L = L_START
+while L <= L_END:
+    for (D, S_key, H_HEAD) in BOLT_PARAMS:
+        timestr   = time.strftime('%Y%m%d-%H%M%S-')
+        random.seed(time.process_time())
+        CHAMFER_TIP      = round(random.uniform(1.0, 3.0), 1)
+        L_THREAD         = round(random.uniform(0.4*L, 0.7*L), 1)
+        HEAD_CHAMFER_DEG = round(random.uniform(13, 39), 1)
+        R_inscribed = S_key / 2.0
+        R_circ      = R_inscribed / cos(radians(30))
+        L_SHANK     = round(L - H_HEAD, 3)
+        doc, msp = create_doc_and_layers()
+        draw_shank(msp, D, L, CHAMFER_TIP, L_SHANK)
+        hcs, hce = draw_head(msp, D, L, L_SHANK,
+                             R_inscribed, R_circ, HEAD_CHAMFER_DEG)
+        x_te = draw_thread(msp, D, L, CHAMFER_TIP, L_THREAD)
+        x_os = draw_side_view(msp, L, S_key, R_inscribed, R_circ)
+        draw_dimensions(msp, D, L, L_SHANK, L_THREAD, R_circ,
+                        R_inscribed, CHAMFER_TIP, x_te,
+                        hcs, hce, x_os)
+        doc.saveas('./output_bolts/'+timestr+'1.dxf')
+        print(f'DXF saved: D={D}, L={round(L,1)}')
+        time.sleep(0.9)
+    L = round(L + L_STEP, 3)
