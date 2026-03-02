@@ -115,6 +115,7 @@ def draw_thread(msp, D, L, CHAMFER_TIP, L_THREAD):
         sym.scale(1, -1, 1)
     return x_thread_end
 
+
 def draw_side_view(msp, L, S_key, R_inscribed, R_circ):
     x_offset_side = L + VIEW_GAP + R_circ
     verts = hex_vertices(x_offset_side, 0, R_circ)
@@ -139,3 +140,50 @@ def draw_side_view(msp, L, S_key, R_inscribed, R_circ):
                  (x_offset_side,  R_circ + AXIS_OVERHANG),
                  dxfattribs={'layer': 'Axises'})
     return x_offset_side
+
+
+def draw_dimensions(msp, D, L, L_SHANK, L_THREAD, R_circ,
+                    R_inscribed, CHAMFER_TIP, x_thread_end,
+                    head_chamfer_start, head_chamfer_end,
+                    x_offset_side):
+    ov = {'dimlfac':1,'dimtxt':2.5,'dimtad':0,
+          'dimtvp':0,'dimdle':0,'dimblk':'EZ_ARROW_FILLED'}
+    base_y = D / 2 + 7.5
+    # Фаска торца: CHAMFER_TIP x45°
+    d1 = msp.add_linear_dim(
+        base=(L, D/2+7.5-CHAMFER_TIP),
+        p1=(L, D/2-CHAMFER_TIP), p2=(L-CHAMFER_TIP, D/2),
+        dimstyle='STANDARD', override=ov,
+        text=str(CHAMFER_TIP)+'x45°',
+        dxfattribs={'layer':'Measure'})
+    d1.set_location(location=(2,1.72), relative=True)
+    d1.render()
+
+    # Длина резьбы
+    d2 = msp.add_linear_dim(
+        base=(L, base_y), p1=(L, D/2), p2=(x_thread_end, D/2),
+        dimstyle='STANDARD', override=ov,
+        dxfattribs={'layer':'Measure'})
+    d2.render()
+    # Полная длина болта
+    d3 = msp.add_linear_dim(
+        base=(L, base_y+7.5), p1=(L, D/2), p2=(0, D/2),
+        dimstyle='STANDARD', override=ov,
+        dxfattribs={'layer':'Measure'})
+    d3.render()
+    # Обозначение резьбы M<D>
+    d4 = msp.add_linear_dim(
+        base=(L+7.5, D/2), p1=(L-CHAMFER_TIP, D/2),
+        p2=(L-CHAMFER_TIP, -D/2), text='M'+str(D),
+        dimstyle='STANDARD', angle=90, override=ov,
+        dxfattribs={'layer':'Thread'})
+    d4.render()
+    
+    # Размер под ключ (вид сбоку)
+    d5 = msp.add_linear_dim(
+        base=(x_offset_side, -(R_inscribed+7.5)),
+        p1=(x_offset_side-R_inscribed, 0),
+        p2=(x_offset_side+R_inscribed, 0),
+        dimstyle='STANDARD', override=ov,
+        dxfattribs={'layer':'Measure'})
+    d5.render()
