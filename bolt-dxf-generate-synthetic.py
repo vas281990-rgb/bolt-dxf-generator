@@ -301,7 +301,7 @@ BOLT_PARAMS = [
     (30, 46, 18.7),  # M30
     (36, 55, 22.5),  # M36
 ]
-L_START, L_END, L_STEP = 80, 80, 9.73
+L_START, L_END, L_STEP = 80, 160, 9.73
 os.makedirs('./output_bolts', exist_ok=True)
 
 L = L_START
