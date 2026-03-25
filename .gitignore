@@ -1,3 +1,7 @@
+output_bolts/*.dxf
+output_bolts/*.stp
+output_bolts/*3.py
+output_bolts/*4.py
 .DS_Store
 __pycache__/
 *.pyc
